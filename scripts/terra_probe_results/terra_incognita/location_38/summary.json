@@ -1,0 +1,208 @@
+{
+  "dataset_name": "terra_incognita",
+  "dataset_root": "C:\\Users\\racs2019\\Documents\\NIPS-KD\\data\\terra_incognita",
+  "train_domain": "location_38",
+  "domain_names": [
+    "location_100",
+    "location_38",
+    "location_43",
+    "location_46"
+  ],
+  "class_mode": "strict",
+  "class_names": [
+    "bird",
+    "bobcat",
+    "cat",
+    "coyote",
+    "dog",
+    "empty",
+    "opossum",
+    "rabbit",
+    "raccoon",
+    "squirrel"
+  ],
+  "teachers": {
+    "openclip_l14_openai_qgelu": {
+      "location_38": {
+        "split": "heldout_20_percent",
+        "accuracy": 0.8950870010235414,
+        "balanced_accuracy": 0.7318228030056653,
+        "n_samples": 1954
+      },
+      "location_100": {
+        "split": "full_domain_ood",
+        "accuracy": 0.5521623283459726,
+        "balanced_accuracy": 0.36230087395769167,
+        "n_samples": 4879
+      },
+      "location_43": {
+        "split": "full_domain_ood",
+        "accuracy": 0.3691542288557214,
+        "balanced_accuracy": 0.33150100709725205,
+        "n_samples": 4020
+      },
+      "location_46": {
+        "split": "full_domain_ood",
+        "accuracy": 0.30627245998039854,
+        "balanced_accuracy": 0.31754780451207426,
+        "n_samples": 6122
+      }
+    },
+    "openclip_b16_datacomp": {
+      "location_38": {
+        "split": "heldout_20_percent",
+        "accuracy": 0.8587512794268168,
+        "balanced_accuracy": 0.6570379621876177,
+        "n_samples": 1954
+      },
+      "location_100": {
+        "split": "full_domain_ood",
+        "accuracy": 0.3674933387989342,
+        "balanced_accuracy": 0.3252800658291215,
+        "n_samples": 4879
+      },
+      "location_43": {
+        "split": "full_domain_ood",
+        "accuracy": 0.21243781094527364,
+        "balanced_accuracy": 0.2653093470774205,
+        "n_samples": 4020
+      },
+      "location_46": {
+        "split": "full_domain_ood",
+        "accuracy": 0.17167592290101275,
+        "balanced_accuracy": 0.17133111046924066,
+        "n_samples": 6122
+      }
+    },
+    "openclip_so400m_siglip": {
+      "location_38": {
+        "split": "heldout_20_percent",
+        "accuracy": 0.8735926305015353,
+        "balanced_accuracy": 0.7011969089755967,
+        "n_samples": 1954
+      },
+      "location_100": {
+        "split": "full_domain_ood",
+        "accuracy": 0.48985447837671653,
+        "balanced_accuracy": 0.2999700668747407,
+        "n_samples": 4879
+      },
+      "location_43": {
+        "split": "full_domain_ood",
+        "accuracy": 0.30223880597014924,
+        "balanced_accuracy": 0.31356492369497635,
+        "n_samples": 4020
+      },
+      "location_46": {
+        "split": "full_domain_ood",
+        "accuracy": 0.26037242731133614,
+        "balanced_accuracy": 0.29331012316354216,
+        "n_samples": 6122
+      }
+    },
+    "openclip_l14_dfn2b": {
+      "location_38": {
+        "split": "heldout_20_percent",
+        "accuracy": 0.8572159672466735,
+        "balanced_accuracy": 0.7050206736939983,
+        "n_samples": 1954
+      },
+      "location_100": {
+        "split": "full_domain_ood",
+        "accuracy": 0.44127895060463207,
+        "balanced_accuracy": 0.34689170581743667,
+        "n_samples": 4879
+      },
+      "location_43": {
+        "split": "full_domain_ood",
+        "accuracy": 0.1582089552238806,
+        "balanced_accuracy": 0.19871356733111709,
+        "n_samples": 4020
+      },
+      "location_46": {
+        "split": "full_domain_ood",
+        "accuracy": 0.231296961777197,
+        "balanced_accuracy": 0.22460540679664937,
+        "n_samples": 6122
+      }
+    },
+    "openclip_h14_laion2b": {
+      "location_38": {
+        "split": "heldout_20_percent",
+        "accuracy": 0.8838280450358239,
+        "balanced_accuracy": 0.7258448067369969,
+        "n_samples": 1954
+      },
+      "location_100": {
+        "split": "full_domain_ood",
+        "accuracy": 0.444968231194917,
+        "balanced_accuracy": 0.3320466820765804,
+        "n_samples": 4879
+      },
+      "location_43": {
+        "split": "full_domain_ood",
+        "accuracy": 0.18756218905472638,
+        "balanced_accuracy": 0.20157719389381307,
+        "n_samples": 4020
+      },
+      "location_46": {
+        "split": "full_domain_ood",
+        "accuracy": 0.11728193400849396,
+        "balanced_accuracy": 0.185259679026268,
+        "n_samples": 6122
+      }
+    },
+    "openclip_h14_378_dfn5b": {
+      "location_38": {
+        "split": "heldout_20_percent",
+        "accuracy": 0.8940634595701126,
+        "balanced_accuracy": 0.7471280073795803,
+        "n_samples": 1954
+      },
+      "location_100": {
+        "split": "full_domain_ood",
+        "accuracy": 0.46279975404796064,
+        "balanced_accuracy": 0.29361657297492727,
+        "n_samples": 4879
+      },
+      "location_43": {
+        "split": "full_domain_ood",
+        "accuracy": 0.17587064676616915,
+        "balanced_accuracy": 0.2345017216474762,
+        "n_samples": 4020
+      },
+      "location_46": {
+        "split": "full_domain_ood",
+        "accuracy": 0.20597843841881738,
+        "balanced_accuracy": 0.2041893951626205,
+        "n_samples": 6122
+      }
+    },
+    "openclip_convnext_xxlarge": {
+      "location_38": {
+        "split": "heldout_20_percent",
+        "accuracy": 0.9032753326509724,
+        "balanced_accuracy": 0.7393073143090619,
+        "n_samples": 1954
+      },
+      "location_100": {
+        "split": "full_domain_ood",
+        "accuracy": 0.554006968641115,
+        "balanced_accuracy": 0.3106461403202633,
+        "n_samples": 4879
+      },
+      "location_43": {
+        "split": "full_domain_ood",
+        "accuracy": 0.3072139303482587,
+        "balanced_accuracy": 0.2431228021654083,
+        "n_samples": 4020
+      },
+      "location_46": {
+        "split": "full_domain_ood",
+        "accuracy": 0.3170532505717086,
+        "balanced_accuracy": 0.2279391687523086,
+        "n_samples": 6122
+      }
+    }
+  }
+}

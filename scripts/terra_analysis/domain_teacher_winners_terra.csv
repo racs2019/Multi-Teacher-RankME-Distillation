@@ -1,0 +1,5 @@
+domain,teacher,accuracy,n_samples,feature_dim,logit_dim,model_tag,dataset_name
+location_100,openclip_convnext_xxlarge,0.5745029719204755,4879,1024,10,openclip::convnext_xxlarge::laion2b_s34b_b82k_augreg_soup,terra_incognita
+location_38,openclip_h14_378_dfn5b,0.5067062557591892,9767,1024,10,openclip::ViT-H-14-378-quickgelu::dfn5b,terra_incognita
+location_43,openclip_h14_378_dfn5b,0.5059701492537313,4020,1024,10,openclip::ViT-H-14-378-quickgelu::dfn5b,terra_incognita
+location_46,openclip_convnext_xxlarge,0.4225743221169552,6122,1024,10,openclip::convnext_xxlarge::laion2b_s34b_b82k_augreg_soup,terra_incognita

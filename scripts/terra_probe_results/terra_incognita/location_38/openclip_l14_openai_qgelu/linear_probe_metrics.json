@@ -1,0 +1,74 @@
+{
+  "teacher_name": "openclip_l14_openai_qgelu",
+  "model_tag": "openclip::ViT-L-14-quickgelu::openai",
+  "teacher_meta": {
+    "model_family": "openclip",
+    "model_name": "ViT-L-14-quickgelu",
+    "pretrained": "openai",
+    "prompt_class_names": [
+      "bird",
+      "bobcat",
+      "cat",
+      "coyote",
+      "dog",
+      "empty",
+      "opossum",
+      "rabbit",
+      "raccoon",
+      "squirrel"
+    ],
+    "prompt_templates": [
+      "a photo of a {}.",
+      "a photo of the {}.",
+      "a picture of a {}.",
+      "a picture of the {}.",
+      "an image of a {}.",
+      "an image of the {}.",
+      "a cropped photo of a {}.",
+      "a close-up photo of a {}.",
+      "a clean photo of a {}.",
+      "a bright photo of a {}.",
+      "a good photo of a {}.",
+      "a centered photo of a {}.",
+      "a studio photo of a {}.",
+      "a product photo of a {}."
+    ],
+    "logit_scale": 100.0,
+    "teacher_family_group": "openai_clip"
+  },
+  "probe": {
+    "type": "LogisticRegression",
+    "standardize_features": true,
+    "C": 1.0,
+    "max_iter": 2000,
+    "test_size": 0.2,
+    "random_state": 42
+  },
+  "train_domain": "location_38",
+  "domains": {
+    "location_38": {
+      "split": "heldout_20_percent",
+      "accuracy": 0.8950870010235414,
+      "balanced_accuracy": 0.7318228030056653,
+      "n_samples": 1954
+    },
+    "location_100": {
+      "split": "full_domain_ood",
+      "accuracy": 0.5521623283459726,
+      "balanced_accuracy": 0.36230087395769167,
+      "n_samples": 4879
+    },
+    "location_43": {
+      "split": "full_domain_ood",
+      "accuracy": 0.3691542288557214,
+      "balanced_accuracy": 0.33150100709725205,
+      "n_samples": 4020
+    },
+    "location_46": {
+      "split": "full_domain_ood",
+      "accuracy": 0.30627245998039854,
+      "balanced_accuracy": 0.31754780451207426,
+      "n_samples": 6122
+    }
+  }
+}

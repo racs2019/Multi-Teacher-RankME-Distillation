@@ -1,0 +1,74 @@
+{
+  "teacher_name": "openclip_b16_datacomp",
+  "model_tag": "openclip::ViT-B-16::datacomp_xl_s13b_b90k",
+  "teacher_meta": {
+    "model_family": "openclip",
+    "model_name": "ViT-B-16",
+    "pretrained": "datacomp_xl_s13b_b90k",
+    "prompt_class_names": [
+      "bird",
+      "bobcat",
+      "cat",
+      "coyote",
+      "dog",
+      "empty",
+      "opossum",
+      "rabbit",
+      "raccoon",
+      "squirrel"
+    ],
+    "prompt_templates": [
+      "a photo of a {}.",
+      "a photo of the {}.",
+      "a picture of a {}.",
+      "a picture of the {}.",
+      "an image of a {}.",
+      "an image of the {}.",
+      "a cropped photo of a {}.",
+      "a close-up photo of a {}.",
+      "a clean photo of a {}.",
+      "a bright photo of a {}.",
+      "a good photo of a {}.",
+      "a centered photo of a {}.",
+      "a studio photo of a {}.",
+      "a product photo of a {}."
+    ],
+    "logit_scale": 100.0,
+    "teacher_family_group": "datacomp"
+  },
+  "probe": {
+    "type": "LogisticRegression",
+    "standardize_features": true,
+    "C": 1.0,
+    "max_iter": 2000,
+    "test_size": 0.2,
+    "random_state": 42
+  },
+  "train_domain": "location_38",
+  "domains": {
+    "location_38": {
+      "split": "heldout_20_percent",
+      "accuracy": 0.8587512794268168,
+      "balanced_accuracy": 0.6570379621876177,
+      "n_samples": 1954
+    },
+    "location_100": {
+      "split": "full_domain_ood",
+      "accuracy": 0.3674933387989342,
+      "balanced_accuracy": 0.3252800658291215,
+      "n_samples": 4879
+    },
+    "location_43": {
+      "split": "full_domain_ood",
+      "accuracy": 0.21243781094527364,
+      "balanced_accuracy": 0.2653093470774205,
+      "n_samples": 4020
+    },
+    "location_46": {
+      "split": "full_domain_ood",
+      "accuracy": 0.17167592290101275,
+      "balanced_accuracy": 0.17133111046924066,
+      "n_samples": 6122
+    }
+  }
+}

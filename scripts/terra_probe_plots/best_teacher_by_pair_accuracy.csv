@@ -1,0 +1,5 @@
+train_domain,test_domain,teacher,teacher_pretty,split,accuracy,balanced_accuracy,n_samples
+location_38,location_100,openclip_convnext_xxlarge,ConvNeXt XXL,full_domain_ood,0.554006968641115,0.3106461403202633,4879
+location_38,location_38,openclip_convnext_xxlarge,ConvNeXt XXL,heldout_20_percent,0.9032753326509724,0.7393073143090619,1954
+location_38,location_43,openclip_l14_openai_qgelu,CLIP L/14 OpenAI,full_domain_ood,0.3691542288557214,0.33150100709725205,4020
+location_38,location_46,openclip_convnext_xxlarge,ConvNeXt XXL,full_domain_ood,0.3170532505717086,0.2279391687523086,6122

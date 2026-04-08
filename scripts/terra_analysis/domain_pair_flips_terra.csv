@@ -1,0 +1,7 @@
+domain_a,domain_b,winner_a,winner_b,same_winner,winner_changed,rank_corr,pairwise_flip_fraction
+location_100,location_38,openclip_convnext_xxlarge,openclip_h14_378_dfn5b,0,1,-0.49999999999999994,0.6666666666666666
+location_100,location_43,openclip_convnext_xxlarge,openclip_h14_378_dfn5b,0,1,0.14285714285714285,0.42857142857142855
+location_100,location_46,openclip_convnext_xxlarge,openclip_convnext_xxlarge,1,0,0.21428571428571425,0.42857142857142855
+location_38,location_43,openclip_h14_378_dfn5b,openclip_h14_378_dfn5b,1,0,0.3571428571428571,0.3333333333333333
+location_38,location_46,openclip_h14_378_dfn5b,openclip_convnext_xxlarge,0,1,0.17857142857142855,0.42857142857142855
+location_43,location_46,openclip_h14_378_dfn5b,openclip_convnext_xxlarge,0,1,0.5714285714285714,0.2857142857142857
