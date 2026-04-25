@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 
 import numpy as np
 import torch
@@ -79,7 +79,7 @@ class ZeroShotVLMWrapper(nn.Module):
     Standard interface:
       forward(x) -> (features, logits)
 
-    We will mainly use `features` for frozen-feature probing.
+    We mainly use `features` for frozen-feature probing.
     """
 
     def __init__(
@@ -313,6 +313,34 @@ def save_npz(out_path: Path, arrays: Dict[str, np.ndarray], meta: Dict):
     print(f"saved: {out_path}")
 
 
+def save_probe_outputs_npz(
+    out_path: Path,
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    paths: np.ndarray,
+    proba: np.ndarray | None,
+    decision_function: np.ndarray | None,
+    meta: Dict[str, Any],
+):
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    payload = {
+        "y_true": y_true.astype(np.int64),
+        "y_pred": y_pred.astype(np.int64),
+        "paths": np.array([str(p) for p in paths], dtype=object),
+        "meta_json": json.dumps(meta),
+    }
+
+    if proba is not None:
+        payload["proba"] = proba.astype(np.float32)
+
+    if decision_function is not None:
+        payload["decision_function"] = np.asarray(decision_function).astype(np.float32)
+
+    np.savez_compressed(out_path, **payload)
+    print(f"saved: {out_path}")
+
+
 def save_json(out_path: Path, obj: Dict):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
@@ -441,13 +469,41 @@ def fit_linear_probe(
     return clf
 
 
-def evaluate_probe(clf, x: np.ndarray, y: np.ndarray) -> Dict[str, float]:
+def evaluate_probe_full(
+    clf,
+    x: np.ndarray,
+    y: np.ndarray,
+    paths: np.ndarray,
+) -> Dict[str, Any]:
     pred = clf.predict(x)
-    return {
+
+    out: Dict[str, Any] = {
         "accuracy": float(accuracy_score(y, pred)),
         "balanced_accuracy": float(balanced_accuracy_score(y, pred)),
         "n_samples": int(len(y)),
+        "y_true": y.astype(int).tolist(),
+        "y_pred": pred.astype(int).tolist(),
+        "paths": [str(p) for p in paths],
     }
+
+    proba_np = None
+    decision_np = None
+
+    if hasattr(clf, "predict_proba"):
+        try:
+            proba_np = clf.predict_proba(x)
+            out["proba"] = np.asarray(proba_np).astype(float).tolist()
+        except Exception:
+            proba_np = None
+
+    if hasattr(clf, "decision_function"):
+        try:
+            decision_np = clf.decision_function(x)
+            out["decision_function"] = np.asarray(decision_np).astype(float).tolist()
+        except Exception:
+            decision_np = None
+
+    return out
 
 
 # ============================================================
@@ -520,6 +576,11 @@ def main():
     parser.add_argument("--probe_C", type=float, default=1.0)
     parser.add_argument("--probe_max_iter", type=int, default=2000)
     parser.add_argument("--save_features", action="store_true")
+    parser.add_argument(
+        "--save_probe_outputs",
+        action="store_true",
+        help="Save per-domain probe predictions/probabilities to NPZ for ensemble/routing baselines.",
+    )
     parser.add_argument("--max_batches", type=int, default=None, help="Debug only")
     parser.add_argument("--skip_existing", action="store_true")
     parser.add_argument("--check_registry_only", action="store_true")
@@ -581,6 +642,8 @@ def main():
             class_names=class_names,
             device=device,
         )
+        model = model.to(device)
+        model.eval()
 
         domain_features: Dict[str, Dict[str, np.ndarray]] = {}
 
@@ -670,7 +733,7 @@ def main():
         }
 
         # In-domain held-out validation
-        val_metrics = evaluate_probe(clf, x_val, y_val)
+        val_metrics = evaluate_probe_full(clf, x_val, y_val, p_val)
         results["domains"][args.train_domain] = {
             "split": "heldout_20_percent",
             **val_metrics,
@@ -682,12 +745,40 @@ def main():
             f"bal_acc={val_metrics['balanced_accuracy']:.4f}"
         )
 
+        if args.save_probe_outputs:
+            proba_np = None
+            decision_np = None
+
+            if "proba" in val_metrics:
+                proba_np = np.asarray(val_metrics["proba"], dtype=np.float32)
+            if "decision_function" in val_metrics:
+                decision_np = np.asarray(val_metrics["decision_function"], dtype=np.float32)
+
+            save_probe_outputs_npz(
+                teacher_outdir / f"probe_outputs_{args.train_domain}.npz",
+                y_true=np.asarray(val_metrics["y_true"], dtype=np.int64),
+                y_pred=np.asarray(val_metrics["y_pred"], dtype=np.int64),
+                paths=np.asarray(val_metrics["paths"], dtype=object),
+                proba=proba_np,
+                decision_function=decision_np,
+                meta={
+                    "dataset_name": args.dataset_name,
+                    "train_domain": args.train_domain,
+                    "target_domain": args.train_domain,
+                    "split": "heldout_20_percent",
+                    "teacher_name": teacher_name,
+                    "model_tag": model_tag,
+                    "class_names": class_names,
+                },
+            )
+
         # Other domains = full OOD test
         for domain_name in domain_names:
             if domain_name == args.train_domain:
                 continue
+
             arr = domain_features[domain_name]
-            test_metrics = evaluate_probe(clf, arr["feats"], arr["labels"])
+            test_metrics = evaluate_probe_full(clf, arr["feats"], arr["labels"], arr["paths"])
             results["domains"][domain_name] = {
                 "split": "full_domain_ood",
                 **test_metrics,
@@ -699,10 +790,36 @@ def main():
                 f"bal_acc={test_metrics['balanced_accuracy']:.4f}"
             )
 
+            if args.save_probe_outputs:
+                proba_np = None
+                decision_np = None
+
+                if "proba" in test_metrics:
+                    proba_np = np.asarray(test_metrics["proba"], dtype=np.float32)
+                if "decision_function" in test_metrics:
+                    decision_np = np.asarray(test_metrics["decision_function"], dtype=np.float32)
+
+                save_probe_outputs_npz(
+                    teacher_outdir / f"probe_outputs_{domain_name}.npz",
+                    y_true=np.asarray(test_metrics["y_true"], dtype=np.int64),
+                    y_pred=np.asarray(test_metrics["y_pred"], dtype=np.int64),
+                    paths=np.asarray(test_metrics["paths"], dtype=object),
+                    proba=proba_np,
+                    decision_function=decision_np,
+                    meta={
+                        "dataset_name": args.dataset_name,
+                        "train_domain": args.train_domain,
+                        "target_domain": domain_name,
+                        "split": "full_domain_ood",
+                        "teacher_name": teacher_name,
+                        "model_tag": model_tag,
+                        "class_names": class_names,
+                    },
+                )
+
         save_json(metrics_json_path, results)
         summary["teachers"][teacher_name] = results["domains"]
 
-        # free GPU memory
         del model
         if use_cuda:
             torch.cuda.empty_cache()
@@ -714,13 +831,15 @@ def main():
 if __name__ == "__main__":
     main()
 
-# python linear_probe_terra.py `
+# python scripts\linear_probe_terra.py `
 #   --dataset_root "C:\Users\racs2019\Documents\NIPS-KD\data\terra_incognita" `
 #   --dataset_name "terra_incognita" `
 #   --train_domain "location_38" `
+#   --domain_names location_38 location_43 location_46 location_100 `
 #   --class_mode strict `
 #   --outdir "terra_probe_results" `
 #   --batch_size 64 `
 #   --num_workers 4 `
 #   --device cuda `
+#   --save_probe_outputs `
 #   --save_features

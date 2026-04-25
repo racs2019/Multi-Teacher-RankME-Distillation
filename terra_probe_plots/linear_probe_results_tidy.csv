@@ -1,0 +1,29 @@
+train_domain,test_domain,teacher,teacher_pretty,split,accuracy,balanced_accuracy,n_samples
+location_38,location_38,openclip_b16_datacomp,CLIP B/16 DataComp,heldout_20_percent,0.8587512794268168,0.6570379621876177,1954
+location_38,location_43,openclip_b16_datacomp,CLIP B/16 DataComp,full_domain_ood,0.21243781094527364,0.2653093470774205,4020
+location_38,location_46,openclip_b16_datacomp,CLIP B/16 DataComp,full_domain_ood,0.17167592290101275,0.17133111046924066,6122
+location_38,location_100,openclip_b16_datacomp,CLIP B/16 DataComp,full_domain_ood,0.3674933387989342,0.3252800658291215,4879
+location_38,location_38,openclip_convnext_xxlarge,ConvNeXt XXL,heldout_20_percent,0.9032753326509724,0.7393073143090619,1954
+location_38,location_43,openclip_convnext_xxlarge,ConvNeXt XXL,full_domain_ood,0.3072139303482587,0.2431228021654083,4020
+location_38,location_46,openclip_convnext_xxlarge,ConvNeXt XXL,full_domain_ood,0.3170532505717086,0.2279391687523086,6122
+location_38,location_100,openclip_convnext_xxlarge,ConvNeXt XXL,full_domain_ood,0.554006968641115,0.3106461403202633,4879
+location_38,location_38,openclip_h14_378_dfn5b,DFN H/14 378,heldout_20_percent,0.8940634595701126,0.7471280073795803,1954
+location_38,location_43,openclip_h14_378_dfn5b,DFN H/14 378,full_domain_ood,0.17587064676616915,0.2345017216474762,4020
+location_38,location_46,openclip_h14_378_dfn5b,DFN H/14 378,full_domain_ood,0.20597843841881738,0.2041893951626205,6122
+location_38,location_100,openclip_h14_378_dfn5b,DFN H/14 378,full_domain_ood,0.46279975404796064,0.29361657297492727,4879
+location_38,location_38,openclip_h14_laion2b,CLIP H/14 LAION,heldout_20_percent,0.8838280450358239,0.7258448067369969,1954
+location_38,location_43,openclip_h14_laion2b,CLIP H/14 LAION,full_domain_ood,0.18756218905472638,0.20157719389381307,4020
+location_38,location_46,openclip_h14_laion2b,CLIP H/14 LAION,full_domain_ood,0.11728193400849396,0.185259679026268,6122
+location_38,location_100,openclip_h14_laion2b,CLIP H/14 LAION,full_domain_ood,0.444968231194917,0.3320466820765804,4879
+location_38,location_38,openclip_l14_dfn2b,DFN L/14 2B,heldout_20_percent,0.8572159672466735,0.7050206736939983,1954
+location_38,location_43,openclip_l14_dfn2b,DFN L/14 2B,full_domain_ood,0.1582089552238806,0.19871356733111709,4020
+location_38,location_46,openclip_l14_dfn2b,DFN L/14 2B,full_domain_ood,0.231296961777197,0.22460540679664937,6122
+location_38,location_100,openclip_l14_dfn2b,DFN L/14 2B,full_domain_ood,0.44127895060463207,0.34689170581743667,4879
+location_38,location_38,openclip_l14_openai_qgelu,CLIP L/14 OpenAI,heldout_20_percent,0.8950870010235414,0.7318228030056653,1954
+location_38,location_43,openclip_l14_openai_qgelu,CLIP L/14 OpenAI,full_domain_ood,0.3691542288557214,0.33150100709725205,4020
+location_38,location_46,openclip_l14_openai_qgelu,CLIP L/14 OpenAI,full_domain_ood,0.30627245998039854,0.31754780451207426,6122
+location_38,location_100,openclip_l14_openai_qgelu,CLIP L/14 OpenAI,full_domain_ood,0.5521623283459726,0.36230087395769167,4879
+location_38,location_38,openclip_so400m_siglip,SigLIP SO400M,heldout_20_percent,0.8735926305015353,0.7011969089755967,1954
+location_38,location_43,openclip_so400m_siglip,SigLIP SO400M,full_domain_ood,0.30223880597014924,0.31356492369497635,4020
+location_38,location_46,openclip_so400m_siglip,SigLIP SO400M,full_domain_ood,0.26037242731133614,0.29331012316354216,6122
+location_38,location_100,openclip_so400m_siglip,SigLIP SO400M,full_domain_ood,0.48985447837671653,0.2999700668747407,4879

@@ -4,3 +4,11 @@ officehome_teachers/
 officehome_teachers_vlm/
 officehome_analysis/
 Transfer-Learning-Library/
+domainnet_probe_plots/
+domainnet_probe_results/
+domainnet_probe_results_sketch/
+figures/
+quickdraw/
+results/
+terra_probe_results/
+teacher_npzs_domainnet/

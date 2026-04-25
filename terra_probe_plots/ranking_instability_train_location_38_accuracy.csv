@@ -1,0 +1,7 @@
+train_domain,target_domain_a,target_domain_b,winner_a,winner_b,same_winner,winner_changed,rank_corr,flip_fraction
+location_38,location_38,location_100,ConvNeXt XXL,ConvNeXt XXL,1,0,0.857142857142857,0.14285714285714285
+location_38,location_38,location_43,ConvNeXt XXL,CLIP L/14 OpenAI,0,1,0.6428571428571428,0.2857142857142857
+location_38,location_38,location_46,ConvNeXt XXL,ConvNeXt XXL,1,0,0.5357142857142857,0.2857142857142857
+location_38,location_43,location_100,CLIP L/14 OpenAI,ConvNeXt XXL,0,1,0.7142857142857142,0.23809523809523808
+location_38,location_43,location_46,CLIP L/14 OpenAI,ConvNeXt XXL,0,1,0.6428571428571428,0.2857142857142857
+location_38,location_46,location_100,ConvNeXt XXL,ConvNeXt XXL,1,0,0.8214285714285713,0.14285714285714285

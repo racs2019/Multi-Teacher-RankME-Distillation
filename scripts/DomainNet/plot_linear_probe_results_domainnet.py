@@ -552,8 +552,8 @@ def main():
 if __name__ == "__main__":
     main()
 
-# python scripts/plot_linear_probe_results.py `
-#   --root "terra_probe_results" `
-#   --dataset_name "terra_incognita" `
+# python scripts/DomainNet/plot_linear_probe_results_domainnet.py `
+#   --root "quickdraw" `
+#   --dataset_name "domainnet" `
 #   --metric accuracy `
-#   --outdir "terra_probe_plots"
+#   --outdir "domainnet_probe_plots"
