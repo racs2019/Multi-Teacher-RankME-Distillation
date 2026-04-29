@@ -1,14 +1,4 @@
 data/
-officehome_analysis_vlm/
-officehome_teachers/
-officehome_teachers_vlm/
-officehome_analysis/
-Transfer-Learning-Library/
-domainnet_probe_plots/
-domainnet_probe_results/
-domainnet_probe_results_sketch/
-figures/
-quickdraw/
-results/
-terra_probe_results/
+features/
+archive/
 teacher_npzs_domainnet/
