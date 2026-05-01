@@ -1,0 +1,11 @@
+python scripts\DomainNet\08_make_geometry_figure.py `
+  --feature_root features\domainnet `
+  --outdir geometry_figure_domainnet_multi `
+  --dataset domainnet `
+  --pairs quickdraw:sketch quickdraw:real quickdraw:infograph infograph:sketch infograph:real infograph:quickdraw `
+  --source_split train `
+  --target_split test `
+  --seed 0 `
+  --n_jobs 8 `
+  --make_single_pair_figures `
+  --teachers openclip_l14_openai_qgelu openclip_b16_datacomp openclip_so400m_siglip openclip_l14_dfn2b openclip_h14_laion2b openclip_h14_378_dfn5b openclip_convnext_xxlarge

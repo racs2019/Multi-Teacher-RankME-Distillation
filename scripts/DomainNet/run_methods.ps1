@@ -5,9 +5,9 @@ $feature_root = "$root/features/domainnet"
 $probe_root   = "$root/results"
 $outdir       = "$root/final_results"
 
-$source = "quickdraw"
+$source = "infograph"
 $targets = @("real", "sketch", "infograph", "quickdraw")
-$seeds = @(0,1,2,3,4)
+$seeds = @(0)
 
 $teachers = @(
     "openclip_l14_openai_qgelu",

@@ -4,10 +4,10 @@ $root = (Resolve-Path ".").Path
 $feature_root = "$root/features/terraincognita"
 $outdir       = "$root/results"
 
-$source = "location_38"
-$targets = @("location_38", "location_43", "location_46", "location_100")
+$source = "location_43"
+$targets = @("location_100", "location_38", "location_43", "location_46")
 
-$seeds = @(0, 1, 2, 3, 4)
+$seeds = @(0)
 
 $teachers = @(
     "openclip_l14_openai_qgelu",

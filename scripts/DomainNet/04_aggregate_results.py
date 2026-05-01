@@ -1,77 +1,129 @@
-#!/usr/bin/env python3
-from __future__ import annotations
-
 import argparse
 from pathlib import Path
 import pandas as pd
+import numpy as np
 
+
+def load_results(results_dir):
+    csvs = sorted(Path(results_dir).glob("*.csv"))
+    if not csvs:
+        raise RuntimeError(f"No result CSVs in {results_dir}")
+    df = pd.concat([pd.read_csv(p) for p in csvs], ignore_index=True)
+    return df
+
+
+def compute_method_means(df):
+    """
+    Compute mean accuracy per method across targets
+    """
+    summary = (
+        df.groupby(["dataset", "source", "target", "method"])
+        .agg(acc_mean=("accuracy", "mean"))
+        .reset_index()
+    )
+
+    overall = (
+        summary.groupby(["dataset", "source", "method"])
+        .agg(acc_mean=("acc_mean", "mean"))
+        .reset_index()
+    )
+
+    return overall
+
+
+def compute_teacher_baselines(probe_csv, source):
+    df = pd.read_csv(probe_csv)
+
+    required = {"dataset", "source", "target", "seed", "teacher", "method", "accuracy"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Probe CSV missing columns: {sorted(missing)}")
+
+    # Match the same source domain used by the method runs.
+    df = df[df["source"].astype(str) == str(source)].copy()
+
+    # Keep only teacher/probe rows if multiple method types exist.
+    # Print available methods if this filter removes everything.
+    if "linear_probe" in set(df["method"].astype(str)):
+        df = df[df["method"].astype(str) == "linear_probe"].copy()
+
+    if df.empty:
+        raise RuntimeError(
+            f"No rows left for source={source}. Available methods: "
+            f"{sorted(pd.read_csv(probe_csv)['method'].astype(str).unique())}"
+        )
+
+    # Average duplicate seeds first.
+    per_teacher_target = (
+        df.groupby(["teacher", "target"])
+        .agg(acc=("accuracy", "mean"))
+        .reset_index()
+    )
+
+    # Global best teacher:
+    # Choose the teacher with best mean across all targets, then report its mean target accuracy.
+    teacher_means = (
+        per_teacher_target.groupby("teacher")["acc"]
+        .mean()
+        .sort_values(ascending=False)
+    )
+    best_teacher = teacher_means.index[0]
+    global_best_value = float(teacher_means.iloc[0])
+
+    # Leave-one-domain-out:
+    # For each target, choose best teacher using the other targets, evaluate on held-out target.
+    targets = sorted(per_teacher_target["target"].unique())
+    lodo_scores = []
+
+    for heldout in targets:
+        train_part = per_teacher_target[per_teacher_target["target"] != heldout]
+        test_part = per_teacher_target[per_teacher_target["target"] == heldout]
+
+        means = train_part.groupby("teacher")["acc"].mean()
+        chosen_teacher = means.idxmax()
+
+        score = test_part[test_part["teacher"] == chosen_teacher]["acc"].mean()
+        lodo_scores.append(float(score))
+
+    return {
+        "global_best_teacher": global_best_value,
+        "lodo_teacher": float(np.mean(lodo_scores)),
+        "best_teacher": best_teacher,
+    }
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_dir", required=True)
-    parser.add_argument("--outdir", required=True)
+    parser.add_argument("--probe_csv", required=True)
+    parser.add_argument("--outdir", default="final_results_summary")
     args = parser.parse_args()
 
-    results_dir = Path(args.results_dir)
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    csv_files = sorted(results_dir.glob("*.csv"))
-    if not csv_files:
-        raise RuntimeError(f"No CSV files found in {results_dir}")
+    # Load method results
+    df = load_results(args.results_dir)
 
-    # ------------------------
-    # Load all runs
-    # ------------------------
-    dfs = []
-    for f in csv_files:
-        df = pd.read_csv(f)
-        dfs.append(df)
+    method_means = compute_method_means(df)
 
-    df_all = pd.concat(dfs, ignore_index=True)
+    # Compute teacher baselines
+    baselines = compute_teacher_baselines(args.probe_csv, source=df["source"].iloc[0])
 
-    # ------------------------
-    # Save raw (important)
-    # ------------------------
-    df_all.to_csv(outdir / "main_results_raw.csv", index=False)
+    # Convert baselines to df
+    baseline_df = pd.DataFrame([
+        {"method": "global_best_teacher", "acc_mean": baselines["global_best_teacher"]},
+        {"method": "lodo_teacher", "acc_mean": baselines["lodo_teacher"]},
+    ])
 
-    # ------------------------
-    # Aggregate: mean ± std
-    # ------------------------
-    df_summary = (
-        df_all
-        .groupby(["dataset", "source", "target", "method"])
-        .agg(
-            acc_mean=("accuracy", "mean"),
-            acc_std=("accuracy", "std"),
-            f1_mean=("macro_f1", "mean"),
-            f1_std=("macro_f1", "std"),
-            n_seeds=("seed", "nunique"),
-        )
-        .reset_index()
-    )
+    # Save outputs
+    method_means.to_csv(outdir / "method_means.csv", index=False)
+    baseline_df.to_csv(outdir / "teacher_baselines.csv", index=False)
 
-    df_summary.to_csv(outdir / "main_results_summary.csv", index=False)
+    print("\n=== METHOD MEANS ===")
+    print(method_means)
 
-    # ------------------------
-    # Pretty print (paper view)
-    # ------------------------
-    print("\n=== SUMMARY (mean ± std) ===\n")
-
-    for target in sorted(df_summary["target"].unique()):
-        print(f"\nTarget: {target}")
-
-        sub = df_summary[df_summary["target"] == target]
-
-        for _, row in sub.iterrows():
-            print(
-                f"{row['method']:25s} "
-                f"{row['acc_mean']:.3f} ± {row['acc_std']:.3f}"
-            )
-
-    print("\nSaved:")
-    print(outdir / "main_results_raw.csv")
-    print(outdir / "main_results_summary.csv")
+    print("\n=== TEACHER BASELINES ===")
+    print(baseline_df)
 
 
 if __name__ == "__main__":

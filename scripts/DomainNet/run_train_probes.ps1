@@ -2,10 +2,10 @@ $root = Get-Location
 $feature_root = "$root/features/domainnet"
 $outdir       = "$root/results"
 
-$source = "quickdraw"
-$targets = @("quickdraw", "real", "sketch", "infograph")
+$source = "infograph"
+$targets = @("infograph", "quickdraw", "real", "sketch")
 
-$seeds = @(0, 1, 2, 3, 4)
+$seeds = @(0)
 
 $teachers = @(
     "openclip_l14_openai_qgelu",

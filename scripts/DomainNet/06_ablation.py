@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 import numpy as np
@@ -11,29 +10,29 @@ from sklearn.metrics import accuracy_score, f1_score
 from sklearn.neighbors import NearestNeighbors
 
 
-def softmax_np(x: np.ndarray, axis: int = -1) -> np.ndarray:
+def softmax_np(x, axis=-1):
     x = x.astype(np.float32)
     x = x - x.max(axis=axis, keepdims=True)
     e = np.exp(x)
     return e / np.clip(e.sum(axis=axis, keepdims=True), 1e-12, None)
 
 
-def entropy(p: np.ndarray, axis: int = -1) -> np.ndarray:
+def entropy(p, axis=-1):
     p = np.clip(p, 1e-12, 1.0)
     return -(p * np.log(p)).sum(axis=axis)
 
 
-def kl_div(p: np.ndarray, q: np.ndarray, axis: int = -1) -> np.ndarray:
+def kl_div(p, q, axis=-1):
     p = np.clip(p, 1e-12, 1.0)
     q = np.clip(q, 1e-12, 1.0)
     return (p * (np.log(p) - np.log(q))).sum(axis=axis)
 
 
-def l2_normalize(x: np.ndarray) -> np.ndarray:
+def l2_normalize(x):
     return x / np.clip(np.linalg.norm(x, axis=1, keepdims=True), 1e-12, None)
 
 
-def load_probe(path: Path) -> dict:
+def load_probe(path: Path):
     if not path.exists():
         raise FileNotFoundError(f"Missing probe file: {path}")
     z = np.load(path, allow_pickle=True)
@@ -44,18 +43,20 @@ def load_probe(path: Path) -> dict:
     }
 
 
-def load_features(path: Path) -> np.ndarray:
+def load_features(path: Path):
     if not path.exists():
         raise FileNotFoundError(f"Missing feature file: {path}")
     z = np.load(path, allow_pickle=True)
     return z["feats"].astype(np.float32)
 
 
-def knn_graph(feats: np.ndarray, k: int) -> np.ndarray:
+def knn_graph(feats, k):
     n = feats.shape[0]
     k_eff = min(k + 1, n)
+
     nbrs = NearestNeighbors(n_neighbors=k_eff, metric="euclidean")
     nbrs.fit(feats)
+
     idx = nbrs.kneighbors(feats, return_distance=False)
 
     clean = []
@@ -71,7 +72,7 @@ def knn_graph(feats: np.ndarray, k: int) -> np.ndarray:
     return np.asarray(clean, dtype=np.int64)
 
 
-def graph_smooth(p: np.ndarray, idx: np.ndarray, alpha: float, iters: int, sharpen_temp: float = 1.0) -> np.ndarray:
+def graph_smooth(p, idx, alpha=0.5, iters=5, sharpen_temp=1.0):
     base = p / np.clip(p.sum(axis=1, keepdims=True), 1e-12, None)
     q = base.copy()
 
@@ -79,6 +80,7 @@ def graph_smooth(p: np.ndarray, idx: np.ndarray, alpha: float, iters: int, sharp
         neigh = np.zeros_like(q)
         for i in range(q.shape[0]):
             neigh[i] = q[idx[i]].mean(axis=0)
+
         q = (1.0 - alpha) * base + alpha * neigh
         q = q / np.clip(q.sum(axis=1, keepdims=True), 1e-12, None)
 
@@ -89,19 +91,12 @@ def graph_smooth(p: np.ndarray, idx: np.ndarray, alpha: float, iters: int, sharp
     return q.astype(np.float32)
 
 
-def uniform_ensemble(probas: np.ndarray) -> np.ndarray:
+def uniform_ensemble(probas):
     p = probas.mean(axis=0)
     return p / np.clip(p.sum(axis=1, keepdims=True), 1e-12, None)
 
 
-def entropy_weighted(probas: np.ndarray, temp: float = 1.0) -> np.ndarray:
-    scores = -entropy(probas, axis=2) / max(temp, 1e-8)
-    weights = softmax_np(scores, axis=0)
-    p = (weights[:, :, None] * probas).sum(axis=0)
-    return p / np.clip(p.sum(axis=1, keepdims=True), 1e-12, None)
-
-
-def agreement_weighted(probas: np.ndarray, temp: float = 1.0) -> np.ndarray:
+def agreement_weighted(probas, temp=1.0):
     mean = probas.mean(axis=0, keepdims=True)
     scores = -kl_div(probas, mean, axis=2) / max(temp, 1e-8)
     weights = softmax_np(scores, axis=0)
@@ -109,53 +104,50 @@ def agreement_weighted(probas: np.ndarray, temp: float = 1.0) -> np.ndarray:
     return p / np.clip(p.sum(axis=1, keepdims=True), 1e-12, None)
 
 
-def tent_proxy(probas: np.ndarray, temp: float = 0.25) -> np.ndarray:
+def entropy_weighted(probas, temp=1.0):
     scores = -entropy(probas, axis=2) / max(temp, 1e-8)
     weights = softmax_np(scores, axis=0)
     p = (weights[:, :, None] * probas).sum(axis=0)
     return p / np.clip(p.sum(axis=1, keepdims=True), 1e-12, None)
 
 
-def graph_lame(anchor: np.ndarray, idx: np.ndarray, alpha: float = 0.35, iters: int = 5, sharpen_temp: float = 0.85) -> np.ndarray:
-    return graph_smooth(anchor, idx=idx, alpha=alpha, iters=iters, sharpen_temp=sharpen_temp)
+def tent_proxy(probas, temp=0.25):
+    return entropy_weighted(probas, temp=temp)
 
 
-def graph_label_prop(anchor: np.ndarray, idx: np.ndarray, top_quantile: float = 0.25, alpha: float = 0.5, iters: int = 5) -> np.ndarray:
+def graph_label_prop(anchor, idx, top_quantile=0.25, alpha=0.5, iters=5):
     conf = anchor.max(axis=1)
     threshold = float(np.quantile(conf, 1.0 - np.clip(top_quantile, 0.01, 0.99)))
 
     pseudo = anchor.copy()
     seed = conf >= threshold
+
     pseudo[seed] = 0.0
     pseudo[seed, anchor[seed].argmax(axis=1)] = 1.0
 
     return graph_smooth(pseudo, idx=idx, alpha=alpha, iters=iters, sharpen_temp=1.0)
 
 
-def local_purity_from_preds(pred: np.ndarray, idx: np.ndarray) -> np.ndarray:
+def graph_lame(anchor, idx, alpha=0.35, iters=5, sharpen_temp=0.85):
+    return graph_smooth(anchor, idx=idx, alpha=alpha, iters=iters, sharpen_temp=sharpen_temp)
+
+
+def local_purity(pred, idx):
     purity = np.zeros(len(pred), dtype=np.float32)
     for i in range(len(pred)):
         purity[i] = np.mean(pred[idx[i]] == pred[i])
     return purity
 
 
-def grace_gate(
-    anchor: np.ndarray,
-    graph: np.ndarray,
-    idx: np.ndarray,
-    agreement_floor: float = 0.50,
-    strength: float = 1.25,
-    power: float = 1.0,
-) -> np.ndarray:
-    """
-    Reliability gate for GRACE.
-
-    Key change from the conservative version:
-    - We no longer force gate=0 when graph and anchor disagree.
-    - Disagreement is downweighted, not completely suppressed.
-    - This allows graph refinement to correct the anchor when local graph structure is coherent.
-    """
-
+def make_gate(
+    anchor,
+    graph,
+    idx,
+    mode,
+    agreement_floor=0.90,
+    strength=2.25,
+    power=0.75,
+):
     pred_anchor = anchor.argmax(axis=1)
     pred_graph = graph.argmax(axis=1)
 
@@ -164,45 +156,45 @@ def grace_gate(
 
     hard_agreement = (pred_anchor == pred_graph).astype(np.float32)
 
-    # Old behavior: agreement was 0/1.
-    # New behavior: disagreement still receives partial trust.
-    agreement_weight = agreement_floor + (1.0 - agreement_floor) * hard_agreement
+    anchor_purity = local_purity(pred_anchor, idx)
+    graph_purity = local_purity(pred_graph, idx)
 
-    anchor_purity = local_purity_from_preds(pred_anchor, idx)
-    graph_purity = local_purity_from_preds(pred_graph, idx)
-
-    # Trust graph when its own predictions form coherent local neighborhoods.
-    # Use max purity so that graph corrections are not killed just because anchor was locally wrong.
-    purity = np.maximum(anchor_purity, graph_purity)
-
-    # Combine confidence from both anchor and graph.
     confidence = 0.5 * conf_anchor + 0.5 * conf_graph
+    purity_max = np.maximum(anchor_purity, graph_purity)
 
-    gate = confidence * agreement_weight * purity
+    if mode == "conf_only":
+        gate = confidence
 
-    # Optional strengthening to avoid overly tiny gates.
-    gate = strength * gate
+    elif mode == "conf_anchor_purity":
+        gate = confidence * anchor_purity
 
-    if power != 1.0:
+    elif mode == "conf_graph_purity":
+        gate = confidence * graph_purity
+
+    elif mode == "conf_max_purity":
+        gate = confidence * purity_max
+
+    elif mode == "hard_agreement":
+        gate = conf_anchor * hard_agreement * anchor_purity
+
+    elif mode == "full":
+        agreement_weight = agreement_floor + (1.0 - agreement_floor) * hard_agreement
+        gate = confidence * agreement_weight * purity_max
+        gate = strength * gate
         gate = np.power(np.clip(gate, 0.0, 1.0), power)
+
+    else:
+        raise ValueError(f"Unknown gate mode: {mode}")
 
     return np.clip(gate, 0.0, 1.0).astype(np.float32)
 
 
-def grace(anchor: np.ndarray, graph: np.ndarray, idx: np.ndarray) -> np.ndarray:
-    g = grace_gate(
-        anchor,
-        graph,
-        idx,
-        agreement_floor=0.90,
-        strength=2.25,
-        power=0.75,
-    )
-
-    p = (1.0 - g[:, None]) * anchor + g[:, None] * graph
+def interpolate(anchor, graph, gate):
+    p = (1.0 - gate[:, None]) * anchor + gate[:, None] * graph
     return p / np.clip(p.sum(axis=1, keepdims=True), 1e-12, None)
 
-def evaluate(y_true: np.ndarray, proba: np.ndarray) -> dict:
+
+def evaluate(y_true, proba):
     y_pred = proba.argmax(axis=1)
     return {
         "accuracy": float(accuracy_score(y_true, y_pred)),
@@ -211,31 +203,18 @@ def evaluate(y_true: np.ndarray, proba: np.ndarray) -> dict:
     }
 
 
-def save_method_output(path: Path, y_true, proba, paths, meta):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(
-        path,
-        y_true=y_true.astype(np.int64),
-        y_pred=proba.argmax(axis=1).astype(np.int64),
-        proba=proba.astype(np.float32),
-        paths=np.asarray(paths, dtype=object),
-        meta_json=json.dumps(meta),
-    )
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--feature_root", required=True)
     parser.add_argument("--probe_root", required=True)
     parser.add_argument("--outdir", required=True)
-    parser.add_argument("--dataset", default="domainnet")
+    parser.add_argument("--dataset", required=True)
     parser.add_argument("--source", required=True)
     parser.add_argument("--target", required=True)
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--teachers", nargs="+", required=True)
-
     parser.add_argument("--k", type=int, default=20)
-    parser.add_argument("--save_outputs", action="store_true")
+
     args = parser.parse_args()
 
     feature_root = Path(args.feature_root)
@@ -281,64 +260,77 @@ def main():
         feats.append(l2_normalize(feat))
 
     probas = np.stack(probas, axis=0)
+
     anchor_feats = l2_normalize(np.concatenate(feats, axis=1))
     idx = knn_graph(anchor_feats, args.k)
 
-    anchor_uniform = uniform_ensemble(probas)
-    anchor_agreement = agreement_weighted(probas, temp=1.0)
+    uniform = uniform_ensemble(probas)
+    agreement = agreement_weighted(probas)
+    entropy_w = entropy_weighted(probas)
+    tent = tent_proxy(probas)
 
-    graph_lame_p = graph_lame(anchor_uniform, idx)
-    graph_prop_p = graph_label_prop(anchor_agreement, idx)
-    grace_p = grace(anchor_agreement, graph_prop_p, idx)
+    graph_lame_p = graph_lame(uniform, idx)
+    graph_prop_p = graph_label_prop(agreement, idx)
 
     methods = {
-        "uniform": anchor_uniform,
-        "entropy_weighted": entropy_weighted(probas, temp=1.0),
-        "agreement_weighted": anchor_agreement,
-        "tent_proxy": tent_proxy(probas, temp=0.25),
+        "uniform_anchor": uniform,
+        "agreement_anchor": agreement,
+        "entropy_weighted": entropy_w,
+        "tent_proxy": tent,
         "graph_lame": graph_lame_p,
         "graph_label_prop": graph_prop_p,
-        "grace": grace_p,
     }
 
+    gates = {}
+
+    for mode in [
+        "conf_only",
+        "conf_anchor_purity",
+        "conf_graph_purity",
+        "conf_max_purity",
+        "hard_agreement",
+        "full",
+    ]:
+        g = make_gate(
+            anchor=agreement,
+            graph=graph_prop_p,
+            idx=idx,
+            mode=mode,
+        )
+        gates[mode] = g
+        methods[f"grace_{mode}"] = interpolate(agreement, graph_prop_p, g)
+
     rows = []
+
     for method, proba in methods.items():
         m = evaluate(y_true, proba)
-        rows.append(
-            {
-                "dataset": args.dataset,
-                "source": args.source,
-                "target": args.target,
-                "seed": args.seed,
-                "method": method,
-                "accuracy": m["accuracy"],
-                "macro_f1": m["macro_f1"],
-                "n_samples": m["n_samples"],
-            }
-        )
 
-        if args.save_outputs:
-            save_method_output(
-                outdir
-                / "method_outputs"
-                / f"seed_{args.seed}"
-                / args.target
-                / f"{method}.npz",
-                y_true=y_true,
-                proba=proba,
-                paths=paths,
-                meta={
-                    "dataset": args.dataset,
-                    "source": args.source,
-                    "target": args.target,
-                    "seed": args.seed,
-                    "method": method,
-                    "teachers": args.teachers,
-                },
-            )
+        row = {
+            "dataset": args.dataset,
+            "source": args.source,
+            "target": args.target,
+            "seed": args.seed,
+            "method": method,
+            "accuracy": m["accuracy"],
+            "macro_f1": m["macro_f1"],
+            "n_samples": m["n_samples"],
+            "mean_gate": np.nan,
+            "median_gate": np.nan,
+            "active_gate_frac": np.nan,
+        }
+
+        if method.startswith("grace_"):
+            mode = method.replace("grace_", "")
+            g = gates[mode]
+            row["mean_gate"] = float(np.mean(g))
+            row["median_gate"] = float(np.median(g))
+            row["active_gate_frac"] = float(np.mean(g > 0.05))
+
+        rows.append(row)
 
     outdir.mkdir(parents=True, exist_ok=True)
-    out_csv = outdir / f"{args.source}_{args.target}_seed{args.seed}.csv"
+
+    out_csv = outdir / f"{args.source}_{args.target}_seed{args.seed}_ablation.csv"
     pd.DataFrame(rows).to_csv(out_csv, index=False)
 
     print(f"Saved: {out_csv}")
@@ -346,3 +338,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
